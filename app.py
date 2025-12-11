@@ -6,11 +6,10 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 # --- CONFIGURATION ---
-API_URL = (
-    "https://api-inference.huggingface.co/models/cssupport/t5-small-awesome-text-to-sql"
-)
+# Switching to Google's popular model. It is almost always "cached" and ready.
+API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-large"
 
-# Get token from environment or string (for testing)
+# Get token from environment
 HF_API_KEY = os.environ.get("HF_API_KEY")
 headers = {"Authorization": f"Bearer {HF_API_KEY}"}
 
@@ -30,9 +29,20 @@ def process_voice():
         voice_prompt = data.get("prompt", "")
         print(f"Received prompt: {voice_prompt}")
 
-        # 1. Prepare Payload
+        # 1. Prepare Payload with "Few-Shot" Examples
+        # Since this is a general model, we give it 2 examples so it knows to write SQL.
+        prompt_template = (
+            "Task: Translate natural language to SQL.\n\n"
+            "Input: Show me users from London\n"
+            "SQL: SELECT * FROM users WHERE city = 'London'\n\n"
+            "Input: Count the number of products with price over 50\n"
+            "SQL: SELECT COUNT(*) FROM products WHERE price > 50\n\n"
+            f"Input: {voice_prompt}\n"
+            "SQL: "
+        )
+
         payload = {
-            "inputs": f"translate to SQL: {voice_prompt}",
+            "inputs": prompt_template,
             "options": {"wait_for_model": True},
         }
 
@@ -42,11 +52,9 @@ def process_voice():
         # 3. Parse Response
         generated_sql = "Error generating SQL"
 
-        # Hugging Face returns a list like [{'generated_text': 'SELECT...'}]
         if isinstance(output, list) and len(output) > 0:
             generated_sql = output[0].get("generated_text", generated_sql)
 
-        # Handle errors (e.g. model loading)
         elif isinstance(output, dict) and "error" in output:
             print(f"API Error: {output}")
             return jsonify(
@@ -66,3 +74,4 @@ def process_voice():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
