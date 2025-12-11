@@ -6,8 +6,8 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 # --- CONFIGURATION ---
-# Switching to Google's popular model. It is almost always "cached" and ready.
-API_URL = "https://api-inference.huggingface.co/models/google/flan-t5-large"
+# UPDATED URL: Changed from 'api-inference' to 'router'
+API_URL = "https://router.huggingface.co/models/google/flan-t5-large"
 
 # Get token from environment
 HF_API_KEY = os.environ.get("HF_API_KEY")
@@ -30,7 +30,6 @@ def process_voice():
         print(f"Received prompt: {voice_prompt}")
 
         # 1. Prepare Payload with "Few-Shot" Examples
-        # Since this is a general model, we give it 2 examples so it knows to write SQL.
         prompt_template = (
             "Task: Translate natural language to SQL.\n\n"
             "Input: Show me users from London\n"
@@ -58,7 +57,7 @@ def process_voice():
         elif isinstance(output, dict) and "error" in output:
             print(f"API Error: {output}")
             return jsonify(
-                {"status": "error", "message": "AI is warming up, try again in 10s"}
+                {"status": "error", "message": f"HF Error: {output['error']}"}
             ), 503
 
         print(f"Generated SQL: {generated_sql}")
@@ -74,4 +73,3 @@ def process_voice():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
-
