@@ -49,7 +49,6 @@ def process_voice():
         voice_prompt = data.get("prompt", "")
         print(f"🎤 Prompt: {voice_prompt}")
 
-        # Qwen works best with standard Chat format
         payload = {
             "model": MODEL_ID,
             "messages": [
