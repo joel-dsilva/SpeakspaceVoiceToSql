@@ -2,9 +2,11 @@ import os
 import requests
 import traceback
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
 
+CORS(app, resources={r"/*": {"origins": "*"}})
 # --- CONFIGURATION ---
 # We use the OpenAI-Compatible Router
 API_URL = "https://router.huggingface.co/v1/chat/completions"
